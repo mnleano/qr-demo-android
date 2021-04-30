@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">QR Demo</string>
+    <string name="rationale_storage">We need storage permission</string>
 </resources>
