@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                 var initialWidth = bitmap.width.toFloat()
                 var initialHeight = bitmap.height.toFloat()
 
-                if (value == null) while (initialWidth > 2000) {
+                if (value == null) while (initialWidth > 1000) {
                     initialWidth /= 2
                     initialHeight /= 2
 
@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
                     }
                         ?: break
                     multiplier++
-                    if (multiplier >= 10) break
+                    if (multiplier >= 5) break
                 }
 
                 Log.d(TAG, "value=$value")
@@ -115,8 +115,10 @@ class MainActivity : AppCompatActivity() {
         initialHeight: Float,
         multiplier: Int
     ): Bitmap? {
-        val scaledWidth = (initialWidth * multiplier * 0.05).roundToInt()
-        val scaledHeight = (initialHeight * multiplier * 0.05).roundToInt()
+
+        val rate = 0.05f
+        val scaledWidth = (initialWidth * multiplier * rate).roundToInt()
+        val scaledHeight = (initialHeight * multiplier * rate).roundToInt()
         Log.d(
             TAG,
             "resizeBitmap: initialWidth=$initialWidth, initialHeight=$initialHeight, multiplier=$multiplier, scaledWidth=$scaledWidth, scaledHeight=$scaledHeight"
