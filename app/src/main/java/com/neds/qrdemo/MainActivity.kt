@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +18,6 @@ import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 import java.io.File
 import java.io.FileOutputStream
-import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
@@ -69,36 +67,14 @@ class MainActivity : AppCompatActivity() {
             data?.data?.let {
                 val imageStream = contentResolver.openInputStream(it)
                 val bitmap = BitmapFactory.decodeStream(imageStream)
-                binding.imageView.setImageBitmap(bitmap)
                 var value = scanQRImage(bitmap)
                 Log.d(
                     TAG,
                     "onActivityResult: width=${bitmap.width}, height=${bitmap.height}, value=$value"
                 )
                 var multiplier = 1
-                var initialWidth = bitmap.width.toFloat()
-                var initialHeight = bitmap.height.toFloat()
-
-                if (value == null) while (initialWidth > 1000) {
-                    initialWidth /= 2
-                    initialHeight /= 2
-
-                    Log.d(
-                        TAG,
-                        "onActivityResult: initialWidth=$initialWidth, initialHeight=$initialHeight"
-                    )
-                }
-
                 while (value == null) {
-                    resizeBitmap(bitmap, initialWidth, initialHeight, multiplier)?.let { bMap ->
-
-                        value = scanQRImage(bMap)
-                        if (value == null) {
-                            val rotateBitmap = rotateBitmap(bMap, 90f)
-                            value = scanQRImage(rotateBitmap)
-                            binding.imageView.setImageBitmap(rotateBitmap)
-                        }
-                    }
+                    resizeBitmap(bitmap, multiplier)?.let { bMap -> value = scanQRImage(bMap) }
                         ?: break
                     multiplier++
                     if (multiplier >= 5) break
@@ -109,24 +85,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun resizeBitmap(
-        bitmap: Bitmap,
-        initialWidth: Float,
-        initialHeight: Float,
-        multiplier: Int
-    ): Bitmap? {
-
-        val rate = 0.05f
-        val scaledWidth = (initialWidth * multiplier * rate).roundToInt()
-        val scaledHeight = (initialHeight * multiplier * rate).roundToInt()
-        Log.d(
-            TAG,
-            "resizeBitmap: initialWidth=$initialWidth, initialHeight=$initialHeight, multiplier=$multiplier, scaledWidth=$scaledWidth, scaledHeight=$scaledHeight"
-        )
-        val rescaleBitmap = Bitmap.createScaledBitmap(
-            bitmap, scaledWidth,
-            scaledHeight, true
-        )
+    private fun resizeBitmap(bitmap: Bitmap, multiplier: Int): Bitmap? {
+        val ratio =  1024f/ bitmap.width
+        val scaledWidth = (bitmap.width * ratio * multiplier * 0.05).toInt()
+        val scaledHeight = (bitmap.height * ratio * multiplier * 0.05).toInt()
+//        Log.d(
+//            TAG,
+//            "resizeBitmap: multiplier=$multiplier, scaledWidth=$scaledWidth, scaledHeight=$scaledHeight"
+//        )
+        val rescaleBitmap = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
         val file = File(getExternalFilesDir(null), "temp.jpg")
 
         if (file.exists())
@@ -142,12 +109,6 @@ class MainActivity : AppCompatActivity() {
             e.printStackTrace()
             null
         }
-    }
-
-    private fun rotateBitmap(bitmap: Bitmap, angle: Float): Bitmap {
-        val matrix = Matrix()
-        matrix.postRotate(angle)
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
     private fun saveImage(bitmap: Bitmap) {
@@ -185,7 +146,6 @@ class MainActivity : AppCompatActivity() {
             val result = reader.decode(bBitMap)
             contents = result.text
         } catch (e: Exception) {
-            e.printStackTrace()
         }
         return contents
     }
